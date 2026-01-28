@@ -12,12 +12,11 @@ jobs:
     name: Escaneo de Petstore
     
     steps:
-      - name: Descargar código
+      - name: Descargar codigo
         uses: actions/checkout@v4
 
-      - name: Preparar entorno
+      - name: Crear directorios ZAP
         run: |
-          # Crear carpeta con permisos correctos para Docker
           mkdir -p $(pwd)/zap/wrk
           chmod 777 $(pwd)/zap/wrk
 
@@ -25,49 +24,45 @@ jobs:
         env:
           MY_TOKEN: ${{ secrets.QA_API_TOKEN }}
         run: |
-          # 1. Inyectar el secreto en el archivo de propiedades
-          # Buscamos ${MY_TOKEN} literal y lo reemplazamos por el valor real
+          # 1. Preparar configuracion
           sed -i "s/\${MY_TOKEN}/$MY_TOKEN/g" options.prop
           cp options.prop ./zap/wrk/options.prop
 
-          # 2. Crear Hook de Python para validación visual en logs
-          # El uso de 'EOF' previene que Bash intente interpretar variables de Python
+          # 2. Crear Hook de Python para validar headers en consola
           cat << 'EOF' > ./zap/wrk/my_hook.py
           def sending_obj_request(zap, req):
               api_key = req.getHeader("api_key")
               url = req.getRequestHeader().getURI().toString()
               if api_key:
-                  print(f"!!! VALIDACION-AUTH: [OK] Header api_key detectado para {url}")
+                  print(f"!!! [CONFIRMACION] Header api_key detectado en: {url}")
               else:
-                  print(f"!!! VALIDACION-AUTH: [FALLO] No hay header en {url}")
+                  print(f"!!! [ERROR] No se detecto header en: {url}")
               return req
           EOF
 
-          # 3. Leer archivo y ejecutar ZAP
+          # 3. Ejecutar y mostrar logs en tiempo real
           INPUT_FILE="apis.txt"
           while IFS= read -r SWAGGER_URL || [ -n "$SWAGGER_URL" ]; do
             SWAGGER_URL=$(echo "$SWAGGER_URL" | xargs)
             [ -z "$SWAGGER_URL" ] && continue
 
             echo "Analizando URL: $SWAGGER_URL"
-            TIMESTAMP=$(date +'%H%M%S')
             
             docker run --rm \
               -v $(pwd)/zap/wrk:/zap/wrk:rw \
               zaproxy/zap-stable zap-api-scan.py \
               -t "$SWAGGER_URL" \
               -f openapi \
-              -r "reporte-${TIMESTAMP}.html" \
+              -r "reporte.html" \
               --hook=/zap/wrk/my_hook.py \
-              -z "-configfile /zap/wrk/options.prop" \
-              2>&1 | tee "./zap/wrk/zap-log-${TIMESTAMP}.log"
+              -z "-configfile /zap/wrk/options.prop" 2>&1 | tee "./zap/wrk/zap.log"
           done < "$INPUT_FILE"
 
-      - name: Subir Reportes y Logs
+      - name: Subir Evidencias
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: Evidencia-ZAP-${{ github.run_id }}
+          name: Reportes-y-Logs
           path: |
             ./zap/wrk/*.html
             ./zap/wrk/*.log
