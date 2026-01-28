@@ -13,4 +13,7 @@ replacer.full_list(0).replacement=${MY_TOKEN}
 # Logging (optional but recommended)
 # ==============================
 
+# Habilitar el log de las peticiones y respuestas HTTP
+logger.org.parosproxy.paros.network.HttpSender.level=DEBUG
+logger.org.apache.commons.httpclient.level=DEBUG
 logger.level=DEBUG
