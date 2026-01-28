@@ -1,36 +1,23 @@
-name: Validacion de Headers
-
-on:
-  workflow_dispatch: # Ejecución manual para pruebas
-
-jobs:
-  test_headers:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Ejecutar ZAP contra Webhook
+- name: Validar Conectividad y Ejecutar ZAP
         env:
           MY_TOKEN: ${{ secrets.QA_API_TOKEN }}
         run: |
+          # 1. Crear directorio y preparar archivos
           mkdir -p ./zap/wrk
-          # Reemplazo de token
           sed -i "s/\${MY_TOKEN}/$MY_TOKEN/g" options.prop
           cp options.prop ./zap/wrk/options.prop
 
-          # Ejecución apuntando a tu Webhook.site
-          # Reemplaza la URL de abajo por la tuya de Webhook.site
+          echo "--- PASO 1: PRUEBA DE FUEGO CON CURL ---"
+          # Esto debe aparecer en tu webhook inmediatamente al iniciar el job
+          curl -X GET "https://bin.h00k.dev/d2f85f2a-3b2a-4a4e-916a-9694b82ba19d?origen=curl_github_actions" \
+               -H "api_key: $MY_TOKEN" \
+               -v
+
+          echo "--- PASO 2: EJECUCIÓN ZAP (MODO BASELINE) ---"
+          # Usamos zap-baseline.py porque zap-api-scan fallará si no hay un JSON de Swagger real.
+          # El baseline atacará la URL directamente como una web.
           docker run --rm \
             -v $(pwd)/zap/wrk:/zap/wrk:rw \
-            zaproxy/zap-stable zap-api-scan.py \
+            zaproxy/zap-stable zap-baseline.py \
             -t "https://bin.h00k.dev/d2f85f2a-3b2a-4a4e-916a-9694b82ba19d" \
-            -f openapi \
-            -z "-configfile /zap/wrk/options.prop" \
-            -d 2>&1 | tee zap_output.log
-
-      - name: Buscar en Log
-        if: always()
-        run: |
-          echo "Buscando rastro del header en el log local..."
-          grep -i "api_key" zap_output.log || echo "No se imprimió en log, revisar Webhook.site"
+            -z "-configfile /zap/wrk/options.prop"
