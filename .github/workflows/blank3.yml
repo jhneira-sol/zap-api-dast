@@ -1,68 +1,36 @@
-name: Lab Petstore API Scan v3
+name: Validacion de Headers
 
 on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+  workflow_dispatch: # Ejecución manual para pruebas
 
 jobs:
-  zap_scan:
+  test_headers:
     runs-on: ubuntu-latest
-    name: Escaneo de Petstore
-    
     steps:
-      - name: Descargar codigo
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Crear directorios ZAP
-        run: |
-          mkdir -p $(pwd)/zap/wrk
-          chmod 777 $(pwd)/zap/wrk
-
-      - name: Ejecutar Escaneo ZAP
+      - name: Ejecutar ZAP contra Webhook
         env:
           MY_TOKEN: ${{ secrets.QA_API_TOKEN }}
         run: |
-          # 1. Preparar configuracion
+          mkdir -p ./zap/wrk
+          # Reemplazo de token
           sed -i "s/\${MY_TOKEN}/$MY_TOKEN/g" options.prop
           cp options.prop ./zap/wrk/options.prop
 
-          # 2. Crear Hook de Python para validar headers en consola
-          cat << 'EOF' > ./zap/wrk/my_hook.py
-          def sending_obj_request(zap, req):
-              api_key = req.getHeader("api_key")
-              url = req.getRequestHeader().getURI().toString()
-              if api_key:
-                  print(f"!!! [CONFIRMACION] Header api_key detectado en: {url}")
-              else:
-                  print(f"!!! [ERROR] No se detecto header en: {url}")
-              return req
-          EOF
+          # Ejecución apuntando a tu Webhook.site
+          # Reemplaza la URL de abajo por la tuya de Webhook.site
+          docker run --rm \
+            -v $(pwd)/zap/wrk:/zap/wrk:rw \
+            zaproxy/zap-stable zap-api-scan.py \
+            -t "https://webhook.site/b46e54c8-4011-4f6f-820b-dc010dcd1e54" \
+            -f openapi \
+            -z "-configfile /zap/wrk/options.prop" \
+            -d 2>&1 | tee zap_output.log
 
-          # 3. Ejecutar y mostrar logs en tiempo real
-          INPUT_FILE="apis.txt"
-          while IFS= read -r SWAGGER_URL || [ -n "$SWAGGER_URL" ]; do
-            SWAGGER_URL=$(echo "$SWAGGER_URL" | xargs)
-            [ -z "$SWAGGER_URL" ] && continue
-
-            echo "Analizando URL: $SWAGGER_URL"
-            
-            docker run --rm \
-              -v $(pwd)/zap/wrk:/zap/wrk:rw \
-              zaproxy/zap-stable zap-api-scan.py \
-              -t "$SWAGGER_URL" \
-              -f openapi \
-              -r "reporte.html" \
-              --hook=/zap/wrk/my_hook.py \
-              -z "-configfile /zap/wrk/options.prop" 2>&1 | tee "./zap/wrk/zap.log"
-          done < "$INPUT_FILE"
-
-      - name: Subir Evidencias
+      - name: Buscar en Log
         if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: Reportes-y-Logs
-          path: |
-            ./zap/wrk/*.html
-            ./zap/wrk/*.log
+        run: |
+          echo "Buscando rastro del header en el log local..."
+          grep -i "api_key" zap_output.log || echo "No se imprimió en log, revisar Webhook.site"
