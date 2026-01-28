@@ -1,1 +1,1 @@
-https://petstore.swagger.io/v2/swagger.json
+https://webhook.site/b46e54c8-4011-4f6f-820b-dc010dcd1e54
