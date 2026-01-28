@@ -1,36 +1,69 @@
-# This is a basic workflow to help you get started with Actions
+name: Lab Petstore API Scan
 
-name: CI
-
-# Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the "main" branch
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+  workflow_dispatch: # Ejecutar manualmente
 
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
-
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
+  zap_scan:
     runs-on: ubuntu-latest
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
+    name: Escaneo de Petstore
+    
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v4
+      - name: Descargar código
+        uses: actions/checkout@v4
 
-      # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: echo Hello, world!
-
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
+      - name: Crear directorios ZAP
         run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+          mkdir -p ./zap/wrk
+          chmod 777 ./zap/wrk
+
+      - name: Ejecutar Escaneo ZAP
+        env:
+          # Traemos el secreto que creaste en GitHub
+          MY_TOKEN: ${{ secrets.QA_API_TOKEN }}
+        run: |
+          INPUT_FILE="apis.txt"
+          TIMESTAMP=$(date +'%Y-%m-%d_%H-%M-%S')
+
+          # --- CONFIGURACIÓN DE AUTH PARA PETSTORE ---
+          # Petstore espera el token en un header llamado "api_key".
+          # IMPORTANTE: Para tus clientes reales, cambia "api_key" por "Authorization"
+          # y "$MY_TOKEN" por "Bearer $MY_TOKEN".
+          
+          AUTH_CONFIG="-z replacer.full_list(0).description=auth \
+                       -z replacer.full_list(0).enabled=true \
+                       -z replacer.full_list(0).matchtype=REQ_HEADER \
+                       -z replacer.full_list(0).matchstr=api_key \
+                       -z replacer.full_list(0).regex=false \
+                       -z replacer.full_list(0).replacement=$MY_TOKEN"
+
+          # Leemos el archivo apis.txt
+          while IFS= read -r SWAGGER_URL || [ -n "$SWAGGER_URL" ]; do
+            
+            # Limpieza básica de la URL
+            SWAGGER_URL=$(echo "$SWAGGER_URL" | xargs)
+            if [ -z "$SWAGGER_URL" ]; then continue; fi
+
+            echo "--> Analizando API: $SWAGGER_URL"
+            
+            # Nombre del reporte
+            REPORT_NAME="reporte-petstore-${TIMESTAMP}.html"
+
+            # Ejecutamos ZAP
+            # Usamos zap-api-scan.py porque es una API
+            docker run --rm \
+              -v $(pwd)/zap/wrk:/zap/wrk:rw \
+              zaproxy/zap-stable zap-api-scan.py \
+              -t "$SWAGGER_URL" \
+              -f openapi \
+              -r "$REPORT_NAME" \
+              $AUTH_CONFIG \
+              || echo "Escaneo completado con alertas."
+
+          done < "$INPUT_FILE"
+
+      - name: Subir Reporte
+        uses: actions/upload-artifact@v4
+        with:
+          name: Reporte-Petstore
+          path: ./zap/wrk/*.html
