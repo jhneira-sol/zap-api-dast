@@ -65,7 +65,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: Resultados-ZAP-${TIMESTAMP}
+          name: Resultados-ZAP-${{ env.TIMESTAMP }}
           path: |
             ./zap/wrk/*.html
             ./zap/wrk/*.log
