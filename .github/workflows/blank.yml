@@ -1,0 +1,71 @@
+name: Lab Petstore API Scan
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  zap_scan:
+    runs-on: ubuntu-latest
+    name: Escaneo de Petstore
+    
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v4
+
+      - name: Crear directorios ZAP
+        run: |
+          mkdir -p $(pwd)/zap/wrk
+          chmod 777 $(pwd)/zap/wrk
+
+      - name: Preparar archivo de opciones (Auth)
+        env:
+          MY_TOKEN: ${{ secrets.QA_API_TOKEN }}
+        run: |
+          # Sustituimos la variable en el archivo físico
+          sed -i "s/\${MY_TOKEN}/$MY_TOKEN/g" options.prop
+          cp options.prop ./zap/wrk/options.prop
+          echo "Configuración de headers preparada."
+
+      - name: Ejecutar Escaneo ZAP
+        run: |
+          INPUT_FILE="apis.txt"
+          TIMESTAMP=$(date +'%Y-%m-%d_%H-%M-%S')
+
+          while IFS= read -r SWAGGER_URL || [ -n "$SWAGGER_URL" ]; do
+            SWAGGER_URL=$(echo "$SWAGGER_URL" | xargs)
+            if [ -z "$SWAGGER_URL" ]; then continue; fi
+
+            echo "==========================================="
+            echo "INICIANDO ANÁLISIS: $SWAGGER_URL"
+            echo "==========================================="
+            
+            REPORT_NAME="reporte-petstore-${TIMESTAMP}.html"
+            LOG_NAME="zap-detalles-${TIMESTAMP}.log"
+
+            # 'tee' envía la salida al archivo y a la consola de GitHub simultáneamente
+            docker run --rm \
+              -v $(pwd)/zap/wrk:/zap/wrk:rw \
+              zaproxy/zap-stable zap-api-scan.py \
+              -t "$SWAGGER_URL" \
+              -f openapi \
+              -r "$REPORT_NAME" \
+              -z "-configfile /zap/wrk/options.prop" \
+              -d 2>&1 | tee "./zap/wrk/$LOG_NAME"
+
+            echo "==========================================="
+            echo "FIN DEL ANÁLISIS PARA: $SWAGGER_URL"
+            echo "==========================================="
+
+          done < "$INPUT_FILE"
+
+      - name: Subir Reporte y Evidencia de Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Resultados-ZAP-${{ github.sha }}
+          path: |
+            ./zap/wrk/*.html
+            ./zap/wrk/*.log
