@@ -1,0 +1,73 @@
+# OWASP ZAP Reports
+*.html
+*.xml
+*.json.html
+*.md.html
+zap-*.log
+zap_report/
+
+# Scan Results
+reports/
+results/
+scans/
+
+# OpenAPI temporal files
+openapi-temp.json
+openapi-backup.json
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Credentials (NEVER commit these)
+*.key
+*.pem
+*.crt
+.env
+.env.local
+secrets/
+credentials/
+api-keys.txt
+tokens.txt
+
+# Archive files
+*.zip
+*.tar
+*.tar.gz
+*.rar
+
+# Build artifacts
+build/
+dist/
+out/
+
+# Node modules (if using JS tools)
+node_modules/
+package-lock.json
+
+# Python (if using Python tools)
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+venv/
+ENV/
+
+# Docker
+.dockerignore
