@@ -1,12 +1,12 @@
 # 🔒 API DAST - Pruebas de Seguridad Automatizadas para APIs con OWASP ZAP
 
-![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/jhneira-sol/zap-api-dast/main.yml?branch=main&label=DAST%20Scan)
+![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/jhneira-sol/zap-api-dast/DAST-API.yml?branch=main&label=DAST%20Scan)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![OWASP](https://img.shields.io/badge/OWASP-ZAP-blue)
 ![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-2088FF)
 ![API](https://img.shields.io/badge/API-Testing-green)
 
-Pipeline automatizado de **Dynamic Application Security Testing (DAST)** para APIs REST usando **OWASP ZAP** integrado con GitHub Actions. Este proyecto utiliza especificaciones **OpenAPI/Swagger** para realizar pruebas de seguridad exhaustivas en APIs.
+Pipeline automatizado de **Dynamic Application Security Testing (DAST)** para APIs REST usando **OWASP ZAP** integrado con GitHub Actions. Este proyecto utiliza especificaciones **OpenAPI/Swagger** desde URLs para realizar pruebas de seguridad exhaustivas en APIs.
 
 ## 📋 Tabla de Contenidos
 
@@ -15,9 +15,9 @@ Pipeline automatizado de **Dynamic Application Security Testing (DAST)** para AP
 - [Cómo Funciona](#-cómo-funciona)
 - [Arquitectura del Proyecto](#-arquitectura-del-proyecto)
 - [Requisitos Previos](#-requisitos-previos)
+- [Configuración](#-configuración)
 - [Uso](#-uso)
 - [Resultados del Escaneo](#-resultados-del-escaneo)
-- [Configuración del Workflow](#️-configuración-del-workflow)
 - [Tecnologías Utilizadas](#️-tecnologías-utilizadas)
 - [Consideraciones de Seguridad](#-consideraciones-de-seguridad)
 - [Recursos Adicionales](#-recursos-adicionales)
@@ -28,11 +28,11 @@ Pipeline automatizado de **Dynamic Application Security Testing (DAST)** para AP
 
 Este repositorio contiene un **pipeline de CI/CD** que realiza automáticamente escaneos de seguridad en APIs REST utilizando **OWASP ZAP (Zed Attack Proxy)**. A diferencia del escaneo de aplicaciones web tradicionales, este proyecto se especializa en:
 
-- **Análisis de APIs REST** mediante especificaciones OpenAPI
+- **Análisis de APIs REST** mediante especificaciones OpenAPI/Swagger
 - Detección de vulnerabilidades específicas de APIs
-- Pruebas automatizadas de endpoints
-- Validación de autenticación y autorización
-- Verificación de métodos HTTP y parámetros
+- Pruebas automatizadas de múltiples endpoints
+- Autenticación mediante tokens en headers
+- Generación de reportes detallados
 
 ### Vulnerabilidades Detectadas:
 
@@ -51,11 +51,12 @@ Este repositorio contiene un **pipeline de CI/CD** que realiza automáticamente 
 ## ✨ Características
 
 - ⚡ **Escaneo automatizado** activado en cada push o PR
-- 📝 **OpenAPI/Swagger** como entrada para definición de API
+- 📝 **Múltiples APIs** escaneadas desde archivo de configuración
+- 🔐 **Autenticación** mediante tokens en headers
 - 🔍 **OWASP ZAP** especialmente configurado para APIs
 - 📊 **Reportes HTML** generados automáticamente
 - 🔄 **Workflow de GitHub Actions** para integración CI/CD
-- 📦 **Almacenamiento de artifacts** para resultados
+- 📦 **Almacenamiento de artifacts** (reportes + logs)
 - 🎯 **API Security** basado en OWASP API Top 10
 - 🔎 **Pruebas exhaustivas** de todos los endpoints
 
@@ -66,25 +67,30 @@ Este repositorio contiene un **pipeline de CI/CD** que realiza automáticamente 
 ```mermaid
 graph LR
     A[Push a Main] --> B[GitHub Actions Activado]
-    B --> C[Leer OpenAPI Spec]
-    C --> D[Contenedor OWASP ZAP Inicia]
-    D --> E[Importar API Definition]
-    E --> F[API Scan Ejecutado]
-    F --> G[Prueba Endpoints]
-    G --> H[Generar Reporte HTML]
-    H --> I[Subir Artifacts]
-    I --> J[Escaneo Completo]
+    B --> C[Leer apis.txt]
+    C --> D[Configurar Autenticación]
+    D --> E[Contenedor OWASP ZAP Inicia]
+    E --> F[Por cada URL en apis.txt]
+    F --> G[Descargar OpenAPI Spec]
+    G --> H[API Scan Ejecutado]
+    H --> I[Generar Reporte HTML]
+    I --> J{Más URLs?}
+    J -->|Sí| F
+    J -->|No| K[Subir Artifacts]
+    K --> L[Escaneo Completo]
 ```
 
 ### Flujo del Pipeline:
 
 1. **Trigger**: Push a la rama `main` o ejecución manual del workflow
 2. **Setup**: GitHub Actions runner inicia entorno Ubuntu
-3. **OpenAPI**: Lee la especificación OpenAPI/Swagger desde `openapi.json`
-4. **Importación**: OWASP ZAP importa la definición de API
-5. **Escaneo**: ZAP ejecuta pruebas de seguridad en todos los endpoints
-6. **Reporte**: Genera reporte HTML con los hallazgos
-7. **Almacenamiento**: Artifacts subidos para revisión
+3. **Configuración**: Lee archivo `apis.txt` con URLs de especificaciones OpenAPI
+4. **Autenticación**: Configura token desde secrets en `options.prop`
+5. **Iteración**: Por cada URL en `apis.txt`:
+   - Descarga especificación OpenAPI/Swagger
+   - OWASP ZAP ejecuta pruebas de seguridad
+   - Genera reporte HTML individual
+6. **Almacenamiento**: Sube todos los reportes y logs como artifacts
 
 ---
 
@@ -94,30 +100,66 @@ graph LR
 zap-api-dast/
 ├── .github/
 │   └── workflows/
-│       └── main.yml          # GitHub Actions workflow
-├── openapi.json              # Especificación OpenAPI/Swagger
+│       └── DAST-API.yml        # GitHub Actions workflow
+├── apis.txt                    # URLs de especificaciones OpenAPI
+├── options.prop                # Configuración de autenticación ZAP
 ├── README.md
 ├── LICENSE
 └── .gitignore
 ```
 
-### Especificación OpenAPI:
+### Archivos de Configuración:
 
-El archivo `openapi.json` contiene la definición completa de tu API:
-- Endpoints disponibles
-- Métodos HTTP permitidos
-- Parámetros requeridos
-- Esquemas de request/response
-- Configuraciones de autenticación
+**`apis.txt`** - Lista de URLs de especificaciones OpenAPI (una por línea):
+```
+https://api.ejemplo.com/swagger.json
+https://api2.ejemplo.com/openapi.json
+```
+
+**`options.prop`** - Configuración de headers de autenticación:
+```properties
+replacer.full_list(0).description=auth1
+replacer.full_list(0).enabled=true
+replacer.full_list(0).matchtype=REQ_HEADER
+replacer.full_list(0).matchstring=Authorization
+replacer.full_list(0).regex=false
+replacer.full_list(0).replacement=Bearer ${MY_TOKEN}
+```
 
 ---
 
 ## 📦 Requisitos Previos
 
 - Repositorio de GitHub con Actions habilitado
-- Especificación OpenAPI/Swagger de tu API
-- API accesible para pruebas (staging/development)
+- URLs públicas de especificaciones OpenAPI/Swagger
+- Token de autenticación de API (si es requerido)
+- APIs accesibles para pruebas (staging/development)
 - Conocimiento básico de seguridad de APIs
+
+---
+
+## ⚙️ Configuración
+
+### 1. Configurar Secret en GitHub
+
+Si tus APIs requieren autenticación, navega a `Settings > Secrets and variables > Actions` y agrega:
+
+```
+QA_API_TOKEN=tu_token_de_api
+```
+
+### 2. Actualizar `apis.txt`
+
+Edita el archivo `apis.txt` con las URLs de tus especificaciones OpenAPI:
+
+```bash
+echo "https://tu-api.com/swagger.json" > apis.txt
+echo "https://otra-api.com/openapi.json" >> apis.txt
+```
+
+### 3. Configurar Autenticación (Opcional)
+
+Si necesitas autenticación, el archivo `options.prop` ya está configurado para usar el token `QA_API_TOKEN`. El workflow sustituirá `${MY_TOKEN}` con el valor del secret automáticamente.
 
 ---
 
@@ -130,23 +172,21 @@ git clone https://github.com/jhneira-sol/zap-api-dast.git
 cd zap-api-dast
 ```
 
-### 2. Actualizar Especificación OpenAPI
+### 2. Actualizar URLs de APIs
 
-Reemplaza `openapi.json` con la especificación de tu API:
+Edita `apis.txt` con tus URLs:
 
 ```bash
-# Opción 1: Copiar archivo local
-cp /path/to/your/openapi.json .
-
-# Opción 2: Descargar desde URL
-curl -o openapi.json https://api.ejemplo.com/openapi.json
+# Una URL por línea
+https://petstore.swagger.io/v2/swagger.json
+https://api.ejemplo.com/openapi.json
 ```
 
 ### 3. Subir Cambios
 
 ```bash
-git add openapi.json
-git commit -m "Actualizar especificación OpenAPI"
+git add apis.txt
+git commit -m "Actualizar URLs de APIs a escanear"
 git push origin main
 ```
 
@@ -154,35 +194,35 @@ git push origin main
 
 Navega a la pestaña **Actions** en GitHub para monitorear el progreso del escaneo.
 
-### 5. Descargar Reporte
+### 5. Descargar Reportes
 
 Una vez completado:
 1. Ve a la ejecución del workflow
 2. Desplázate a la sección **Artifacts**
-3. Descarga el reporte HTML
+3. Descarga `Resultados-ZAP-[timestamp].zip`
+4. Descomprime para ver reportes HTML y logs
 
 ---
 
 ## 📊 Resultados del Escaneo
 
-El scanner OWASP ZAP genera un **reporte HTML** que contiene:
+El scanner OWASP ZAP genera para cada API:
 
-### Por Endpoint:
-- URL del endpoint
-- Método HTTP
-- Parámetros probados
-- Vulnerabilidades encontradas
+### Archivos Generados:
+- **`reporte-petstore-[timestamp].html`** - Reporte visual de vulnerabilidades
+- **`zap-detalles-[timestamp].log`** - Log detallado del escaneo
 
-### Por Vulnerabilidad:
+### Contenido del Reporte HTML:
+
+- **Resumen**: Total de vulnerabilidades por severidad
+- **Por Endpoint**: Vulnerabilidades específicas de cada endpoint
 - **Severidad**: Crítica, Alta, Media, Baja, Informativa
-- **Tipo**: Según OWASP API Top 10
-- **Descripción**: Detalles del hallazgo
-- **Endpoints afectados**: Lista de URLs
-- **Evidencia**: Request/Response de prueba
-- **Recomendaciones**: Cómo remediar
-- **Referencias**: CWE, OWASP
+- **Descripción**: Detalles técnicos del hallazgo
+- **Evidencia**: Request/Response de las pruebas
+- **Recomendaciones**: Cómo remediar la vulnerabilidad
+- **Referencias**: CWE, OWASP API Top 10
 
-### Ejemplo de Estructura del Reporte:
+### Ejemplo de Estructura:
 
 ```
 📄 ZAP API Scanning Report
@@ -198,31 +238,6 @@ El scanner OWASP ZAP genera un **reporte HTML** que contiene:
 
 ---
 
-## ⚙️ Configuración del Workflow
-
-El workflow de GitHub Actions está definido en `.github/workflows/main.yml`.
-
-### Componentes Principales:
-
-- **Trigger**: `push` a main branch, `workflow_dispatch` para ejecuciones manuales
-- **Runner**: `ubuntu-latest`
-- **OWASP ZAP Action**: API scan mode
-- **Input**: `openapi.json`
-- **Formato de Reporte**: HTML
-- **Artifact Retention**: 30 días
-
-### Opciones de Personalización:
-
-Puedes modificar el workflow para:
-- Agregar autenticación (API keys, OAuth, JWT)
-- Configurar contextos de usuario
-- Ajustar profundidad del escaneo
-- Establecer timeouts
-- Integrar con notificaciones Slack/Email
-- Configurar security gates
-
----
-
 ## 🛠️ Tecnologías Utilizadas
 
 | Tecnología | Propósito |
@@ -230,7 +245,7 @@ Puedes modificar el workflow para:
 | **OWASP ZAP** | Scanner de seguridad dinámico para APIs |
 | **OpenAPI/Swagger** | Especificación de API |
 | **GitHub Actions** | Automatización CI/CD |
-| **Docker** | Escaneo containerizado |
+| **Docker** | Escaneo containerizado (zaproxy/zap-stable) |
 | **Ubuntu** | Entorno del runner |
 | **HTML** | Generación de reportes |
 
@@ -241,29 +256,27 @@ Puedes modificar el workflow para:
 ### ⚠️ IMPORTANTE:
 
 - **Nunca escanear** APIs de producción sin autorización
-- **Nunca hacer commit** de API keys o tokens
+- **Nunca hacer commit** de tokens o API keys en `options.prop`
 - **Usar ambientes** de staging/development para pruebas
 - **Rate limiting** - Algunos endpoints pueden bloquear escaneos agresivos
-- **Datos sensibles** - El reporte puede contener información sensible
+- **Datos sensibles** - Los reportes pueden contener información sensible
 
 ### Mejores Prácticas:
 
-1. ✅ Probar contra **entornos de desarrollo/staging** primero
-2. ✅ Coordinar con el equipo de infraestructura
-3. ✅ Revisar la especificación OpenAPI antes del escaneo
-4. ✅ Configurar autenticación apropiada en ZAP
-5. ✅ Revisar y clasificar hallazgos
-6. ✅ Integrar en proceso de gestión de vulnerabilidades
-7. ✅ Combinar con SAST para cobertura completa
+1. ✅ Probar contra **entornos de desarrollo/staging** únicamente
+2. ✅ Usar GitHub Secrets para tokens de autenticación
+3. ✅ Coordinar con el equipo de infraestructura antes de escanear
+4. ✅ Revisar las especificaciones OpenAPI antes del escaneo
+5. ✅ Analizar y clasificar los hallazgos apropiadamente
+6. ✅ Integrar en el proceso de gestión de vulnerabilidades
+7. ✅ Combinar con SAST para cobertura completa de seguridad
 
-### Diferencias API vs Web DAST:
+### Notas sobre Autenticación:
 
-| Aspecto | Web DAST | API DAST |
-|---------|----------|----------|
-| **Input** | URL | OpenAPI Spec |
-| **Cobertura** | Páginas HTML | Endpoints JSON/XML |
-| **Focus** | UI vulnerabilities | Business logic flaws |
-| **Autenticación** | Cookies/Sessions | API Keys/JWT/OAuth |
+- El token se inyecta en el header `Authorization` como `Bearer ${MY_TOKEN}`
+- La sustitución ocurre en tiempo de ejecución desde GitHub Secrets
+- El archivo `options.prop` en el repositorio NO contiene el token real
+- Asegúrate de no hacer commit de tokens reales
 
 ---
 
@@ -273,7 +286,6 @@ Puedes modificar el workflow para:
 - [OWASP API Security Top 10](https://owasp.org/www-project-api-security/)
 - [OpenAPI Specification](https://swagger.io/specification/)
 - [GitHub Actions Documentation](https://docs.github.com/es/actions)
-- [API Security Best Practices](https://owasp.org/www-project-api-security/)
 - [ZAP API Scan Documentation](https://www.zaproxy.org/docs/docker/api-scan/)
 
 ---
