@@ -40,12 +40,11 @@ Este repositorio contiene un **pipeline de CI/CD** que realiza automáticamente 
 - Cross-Site Scripting (XSS)
 - Security Misconfiguration
 - Missing Security Headers
-- Cookie Without Secure Flag
-- Cookie Without HttpOnly Flag
 - Information Disclosure
 - Server Leaks Version Information
 - X-Content-Type-Options Header Missing
 - Content Security Policy (CSP) Header Not Set
+- otros
 
 ---
 
