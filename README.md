@@ -40,8 +40,6 @@ Este repositorio contiene un **pipeline de CI/CD** que realiza automáticamente 
 - Cross-Site Scripting (XSS)
 - Security Misconfiguration
 - Missing Security Headers
-- Cookie Without Secure Flag
-- Cookie Without HttpOnly Flag
 - Information Disclosure
 - Server Leaks Version Information
 - X-Content-Type-Options Header Missing
@@ -213,7 +211,7 @@ El scanner OWASP ZAP genera para cada API:
 - **Descripción**: Detalles técnicos del hallazgo
 - **Evidencia**: Request/Response de las pruebas
 - **Recomendaciones**: Cómo remediar la vulnerabilidad
-- **Referencias**: CWE, OWASP API Top 10
+- **Referencias**: CWE
 
 ---
 
@@ -248,7 +246,7 @@ El scanner OWASP ZAP genera para cada API:
 4. Revisar las especificaciones OpenAPI antes del escaneo
 5. Analizar y clasificar los hallazgos apropiadamente
 6. Integrar en el proceso de gestión de vulnerabilidades
-7. Combinar con SAST para cobertura completa de seguridad
+7. Combinar con SAST y SCA para cobertura completa de seguridad
 
 ### Notas sobre Autenticación:
 
