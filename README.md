@@ -34,17 +34,18 @@ Este repositorio contiene un **pipeline de CI/CD** que realiza automáticamente 
 - Autenticación mediante tokens en headers
 - Generación de reportes detallados
 
-### Vulnerabilidades Detectadas:
+### Vulnerabilidades Comúnmente Detectadas:
 
-- Broken Authentication
-- Broken Object Level Authorization (BOLA)
-- Excessive Data Exposure
-- Lack of Resources & Rate Limiting
+- SQL Injection
+- Cross-Site Scripting (XSS)
 - Security Misconfiguration
-- Injection (SQL, NoSQL, Command)
-- Mass Assignment
-- Improper Assets Management
-- Insufficient Logging & Monitoring
+- Missing Security Headers
+- Cookie Without Secure Flag
+- Cookie Without HttpOnly Flag
+- Information Disclosure
+- Server Leaks Version Information
+- X-Content-Type-Options Header Missing
+- Content Security Policy (CSP) Header Not Set
 
 ---
 
@@ -221,20 +222,6 @@ El scanner OWASP ZAP genera para cada API:
 - **Evidencia**: Request/Response de las pruebas
 - **Recomendaciones**: Cómo remediar la vulnerabilidad
 - **Referencias**: CWE, OWASP API Top 10
-
-### Ejemplo de Estructura:
-
-```
-📄 ZAP API Scanning Report
-├── 🔴 Vulnerabilidades Críticas (0)
-├── 🟠 Vulnerabilidades Altas (1)
-│   └── Broken Authentication en /api/login
-├── 🟡 Vulnerabilidades Medias (3)
-│   ├── Excessive Data Exposure en /api/users
-│   ├── Missing Rate Limiting en /api/search
-│   └── Security Misconfiguration en /api/config
-└── 🔵 Vulnerabilidades Informativas (5)
-```
 
 ---
 
