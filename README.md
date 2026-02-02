@@ -1,4 +1,4 @@
-# 🔒 API DAST - Pruebas de Seguridad Automatizadas para APIs con OWASP ZAP
+# API DAST - Pruebas de Seguridad Automatizadas para APIs con OWASP ZAP
 
 ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/jhneira-sol/zap-api-dast/DAST-API.yml?branch=main&label=DAST%20Scan)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
@@ -6,25 +6,25 @@
 ![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-2088FF)
 ![API](https://img.shields.io/badge/API-Testing-green)
 
-Pipeline automatizado de **Dynamic Application Security Testing (DAST)** para APIs REST usando **OWASP ZAP** integrado con GitHub Actions. Este proyecto utiliza especificaciones **OpenAPI/Swagger** desde URLs para realizar pruebas de seguridad en APIs.
+Pipeline automatizado de **Dynamic Application Security Testing (DAST)** para APIs REST usando **OWASP ZAP** integrado con GitHub Actions. Este proyecto utiliza especificaciones **OpenAPI/Swagger** desde URLs para realizar pruebas de seguridad exhaustivas en APIs.
 
-## 📋 Tabla de Contenidos
+## Tabla de Contenidos
 
-- [Descripción General](#-descripción-general)
-- [Características](#-características)
-- [Cómo Funciona](#-cómo-funciona)
-- [Arquitectura del Proyecto](#-arquitectura-del-proyecto)
-- [Requisitos Previos](#-requisitos-previos)
-- [Configuración](#-configuración)
-- [Uso](#-uso)
-- [Resultados del Escaneo](#-resultados-del-escaneo)
-- [Tecnologías Utilizadas](#️-tecnologías-utilizadas)
-- [Consideraciones de Seguridad](#-consideraciones-de-seguridad)
-- [Recursos Adicionales](#-recursos-adicionales)
+- [Descripción General](#descripción-general)
+- [Características](#características)
+- [Cómo Funciona](#cómo-funciona)
+- [Arquitectura del Proyecto](#arquitectura-del-proyecto)
+- [Requisitos Previos](#requisitos-previos)
+- [Configuración](#configuración)
+- [Uso](#uso)
+- [Resultados del Escaneo](#resultados-del-escaneo)
+- [Tecnologías Utilizadas](#tecnologías-utilizadas)
+- [Consideraciones de Seguridad](#consideraciones-de-seguridad)
+- [Recursos Adicionales](#recursos-adicionales)
 
 ---
 
-## 🎯 Descripción General
+## Descripción General
 
 Este repositorio contiene un **pipeline de CI/CD** que realiza automáticamente escaneos de seguridad en APIs REST utilizando **OWASP ZAP (Zed Attack Proxy)**. A diferencia del escaneo de aplicaciones web tradicionales, este proyecto se especializa en:
 
@@ -40,29 +40,30 @@ Este repositorio contiene un **pipeline de CI/CD** que realiza automáticamente 
 - Cross-Site Scripting (XSS)
 - Security Misconfiguration
 - Missing Security Headers
+- Cookie Without Secure Flag
+- Cookie Without HttpOnly Flag
 - Information Disclosure
 - Server Leaks Version Information
 - X-Content-Type-Options Header Missing
 - Content Security Policy (CSP) Header Not Set
-- otros
 
 ---
 
-## ✨ Características
+## Características
 
-- ⚡ **Escaneo automatizado** activado en cada push o PR
-- 📝 **Múltiples APIs** escaneadas desde archivo de configuración
-- 🔐 **Autenticación** mediante tokens en headers
-- 🔍 **OWASP ZAP** especialmente configurado para APIs
-- 📊 **Reportes HTML** generados automáticamente
-- 🔄 **Workflow de GitHub Actions** para integración CI/CD
-- 📦 **Almacenamiento de artifacts** (reportes + logs)
-- 🎯 **API Security** basado en OWASP API Top 10
-- 🔎 **Pruebas exhaustivas** de todos los endpoints
+- Escaneo automatizado activado en cada push o PR
+- Múltiples APIs escaneadas desde archivo de configuración
+- Autenticación mediante tokens en headers
+- OWASP ZAP especialmente configurado para APIs
+- Reportes HTML generados automáticamente
+- Workflow de GitHub Actions para integración CI/CD
+- Almacenamiento de artifacts (reportes + logs)
+- API Security basado en OWASP API Top 10
+- Pruebas exhaustivas de todos los endpoints
 
 ---
 
-## 🔄 Cómo Funciona
+## Cómo Funciona
 
 ```mermaid
 graph LR
@@ -94,7 +95,7 @@ graph LR
 
 ---
 
-## 🏗️ Arquitectura del Proyecto
+## Arquitectura del Proyecto
 
 ```
 zap-api-dast/
@@ -128,7 +129,7 @@ replacer.full_list(0).replacement=Bearer ${MY_TOKEN}
 
 ---
 
-## 📦 Requisitos Previos
+## Requisitos Previos
 
 - Repositorio de GitHub con Actions habilitado
 - URLs públicas de especificaciones OpenAPI/Swagger
@@ -138,7 +139,7 @@ replacer.full_list(0).replacement=Bearer ${MY_TOKEN}
 
 ---
 
-## ⚙️ Configuración
+## Configuración
 
 ### 1. Configurar Secret en GitHub
 
@@ -163,7 +164,7 @@ Si necesitas autenticación, el archivo `options.prop` ya está configurado para
 
 ---
 
-## 🚀 Uso
+## Uso
 
 ### 1. Clonar el Repositorio
 
@@ -204,7 +205,7 @@ Una vez completado:
 
 ---
 
-## 📊 Resultados del Escaneo
+## Resultados del Escaneo
 
 El scanner OWASP ZAP genera para cada API:
 
@@ -224,7 +225,7 @@ El scanner OWASP ZAP genera para cada API:
 
 ---
 
-## 🛠️ Tecnologías Utilizadas
+## Tecnologías Utilizadas
 
 | Tecnología | Propósito |
 |------------|----------|
@@ -237,9 +238,9 @@ El scanner OWASP ZAP genera para cada API:
 
 ---
 
-## 🔐 Consideraciones de Seguridad
+## Consideraciones de Seguridad
 
-### ⚠️ IMPORTANTE:
+### IMPORTANTE:
 
 - **Nunca escanear** APIs de producción sin autorización
 - **Nunca hacer commit** de tokens o API keys en `options.prop`
@@ -249,13 +250,13 @@ El scanner OWASP ZAP genera para cada API:
 
 ### Mejores Prácticas:
 
-1. ✅ Probar contra **entornos de desarrollo/staging** únicamente
-2. ✅ Usar GitHub Secrets para tokens de autenticación
-3. ✅ Coordinar con el equipo de infraestructura antes de escanear
-4. ✅ Revisar las especificaciones OpenAPI antes del escaneo
-5. ✅ Analizar y clasificar los hallazgos apropiadamente
-6. ✅ Integrar en el proceso de gestión de vulnerabilidades
-7. ✅ Combinar con SAST y SCA para cobertura completa de seguridad
+1. Probar contra **entornos de desarrollo/staging** únicamente
+2. Usar GitHub Secrets para tokens de autenticación
+3. Coordinar con el equipo de infraestructura antes de escanear
+4. Revisar las especificaciones OpenAPI antes del escaneo
+5. Analizar y clasificar los hallazgos apropiadamente
+6. Integrar en el proceso de gestión de vulnerabilidades
+7. Combinar con SAST para cobertura completa de seguridad
 
 ### Notas sobre Autenticación:
 
@@ -266,18 +267,10 @@ El scanner OWASP ZAP genera para cada API:
 
 ---
 
-## 📚 Recursos Adicionales
+## Recursos Adicionales
 
 - [Documentación OWASP ZAP](https://www.zaproxy.org/docs/)
 - [OWASP API Security Top 10](https://owasp.org/www-project-api-security/)
 - [OpenAPI Specification](https://swagger.io/specification/)
 - [GitHub Actions Documentation](https://docs.github.com/es/actions)
 - [ZAP API Scan Documentation](https://www.zaproxy.org/docs/docker/api-scan/)
-
----
-
-<div align="center">
-
-**⭐ Si encuentras útil este proyecto, considera darle una estrella!**
-
-</div>
